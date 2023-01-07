@@ -1,0 +1,114 @@
+﻿@page "/load"
+@using SignalRPrototype.Client.Services.Interface
+@using SignalRPrototype.Shared.Models
+@using SignalRPrototype.Shared.Models.Payload
+@using SignalRPrototype.Client.Services.Concrete
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<PageTitle>Load Testing</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Load Testing</MudText>
+
+<MudNumericField Class="my-2" Label="Connections" @bind-Value="@_numericConnections" Variant="Variant.Outlined" Min="0" />
+<MudNumericField Class="my-2" Label="Subscribers" @bind-Value="@_numericSubscribers" Variant="Variant.Outlined" Min="0" />
+
+<MudStack Row="true" Class="my-3">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="async () => await AddConnections()">Add Connections</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="async () => await ClearConnections()">Clear All</MudButton>
+</MudStack>
+
+<MudStack Row="true" Class="my-3">
+    <MudText Typo="Typo.h6">@(_clients.Count())</MudText>
+    <MudText Typo="Typo.subtitle1">Connections</MudText>
+    
+    <MudText Typo="Typo.h6">@(_subscriptions.Count())</MudText>
+    <MudText Typo="Typo.subtitle1">Subscriptions</MudText>
+</MudStack>
+
+@code {
+    private readonly List<ISignalRClient> _clients;
+    private readonly List<SignalRObservable<ProductPrice>> _subscriptions;
+    private readonly List<IDisposable> _subscriptionsDisposables;
+    private int _subscriptionsCount = 0;
+
+    private int _numericConnections = 1;
+    private int _numericSubscribers = 3;
+    
+    private IEnumerable<Store> _stores;
+    private IEnumerable<Store> _selectedStores;
+
+    public LoadTesting()
+    {
+        _clients = new List<ISignalRClient>();
+        _subscriptions = new List<SignalRObservable<ProductPrice>>();
+        _subscriptionsDisposables = new List<IDisposable>();
+        
+        _stores = Enumerable.Empty<Store>();
+        _selectedStores = new HashSet<Store>();
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _stores = await Http.GetFromJsonAsync<IEnumerable<Store>>("api/Store/GetStores") ?? throw new InvalidOperationException();
+    }
+
+    private async Task AddConnections()
+    {
+        Console.WriteLine($"Adding {_numericConnections} connections with {_numericSubscribers} subscriptions.");
+        for (var i = 0; i < _numericConnections; i++)
+        {
+            await AddConnection(_numericSubscribers);
+        }
+    }
+
+    private async Task ClearConnections()
+    {
+        foreach (var sub in _subscriptionsDisposables)
+        {
+            sub.Dispose();
+        }
+        
+        foreach (var conn in _clients)
+        {
+            await conn.CloseConnectionAsync();
+        }
+        
+        _clients.Clear();
+        _subscriptions.Clear();
+        _subscriptionsDisposables.Clear();
+    }
+
+    private async Task AddConnection(int subscribers)
+    {
+        ISignalRClient client = new SignalRClient();
+        await client.OpenConnectionAsync(Navigation.ToAbsoluteUri("/hub"));
+        for (var i = 0; i < subscribers; i++)
+        {
+            await AddSubscription(client);
+        }
+        _clients.Add(client);
+    }
+
+    private async Task AddSubscription(ISignalRClient client)
+    {
+        var storeIds = new Guid[] { _stores.ElementAt((new Random()).Next(0, _stores.Count())).StoreId };
+        if (storeIds.Length == 0)
+            throw new ArgumentException("Must have at least one store id.", nameof(storeIds));
+        
+        var (subscription, _) = await client.RefreshPricesObservable(new RefreshPricesPayload(storeIds, true));
+        _subscriptionsCount++;
+        var disposable = subscription.Subscribe(p =>
+            {
+                Console.WriteLine($"{subscription.ContextId} received (StoreId: {p.StoreId}, ProductId: {p.ProductId}, TimeGenerated: {p.TimeGenerated}, Price: {p.Price}");
+            });
+        _subscriptions.Add(subscription);
+        _subscriptionsDisposables.Add(disposable);
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        await ClearConnections();
+    }
+}

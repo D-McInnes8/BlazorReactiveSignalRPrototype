@@ -1,0 +1,118 @@
+﻿@page "/fetchdata"
+@inject HttpClient Http
+@inject ISignalRClient SignalRClient
+@inject NavigationManager Navigation
+@using SignalRPrototype.Client.Services.Concrete
+@using SignalRPrototype.Client.Services.Interface
+@using SignalRPrototype.Shared.Models
+@using SignalRPrototype.Shared.Models.Payload
+@implements IAsyncDisposable
+
+<PageTitle>Fetch data</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Weather forecast</MudText>
+<MudText Class="mb-8">This component demonstrates fetching data from the server.</MudText>
+
+<MudSelect T="Guid" Label="Store(s)" MultiSelection="false" Value="_selectedStore" ValueChanged="SelectStore">
+    @foreach (var store in _stores)
+    {
+        <MudSelectItem T="Guid" Value="@store.StoreId">@store.Name</MudSelectItem>
+    }
+</MudSelect>
+
+@if (_productPrices == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudTable Items="_productPrices" Hover="true" SortLabel="Sort By" Elevation="0">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<KeyValuePair<Guid, ProductPrice>, object>(x=>x.Value.TimeGenerated)">Date</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<KeyValuePair<Guid, ProductPrice>, object>(x=>x.Value.StoreId)">Store</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<KeyValuePair<Guid, ProductPrice>, object>(x=>GetProductNameFromId(x.Value.ProductId))">Product</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<KeyValuePair<Guid, ProductPrice>, object>(x=>x.Value.Price!)">Price</MudTableSortLabel></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Date">
+                @context.Value.TimeGenerated
+                @if (context.Value.ProductId == _lastUpdatedProduct)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Primary" />
+                }
+            </MudTd>
+            <MudTd DataLabel="Store">@GetStoreNameFromId(context.Value.StoreId)</MudTd>
+            <MudTd DataLabel="Product">@_products.Single(p => p.ProductId == context.Value.ProductId).Name</MudTd>
+            <MudTd DataLabel="Price">$@context.Value.Price.ToString("##########.00")</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{50, 100}" />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private SignalRObservable<ProductPrice> _subscription;
+    private IDisposable _subscriptionDisposable;
+    
+    private Dictionary<Guid, ProductPrice> _productPrices;
+    private IEnumerable<Store> _stores;
+    private IEnumerable<Product> _products;
+
+    private Guid _selectedStore;
+    private Guid? _lastUpdatedProduct;
+
+    public FetchData()
+    {
+        _stores = Enumerable.Empty<Store>();
+        _products = Enumerable.Empty<Product>();
+        _productPrices = new Dictionary<Guid, ProductPrice>();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stores = await Http.GetFromJsonAsync<IEnumerable<Store>>("api/Store/GetStores") ?? throw new InvalidOperationException();
+        _products = await Http.GetFromJsonAsync<IEnumerable<Product>>("api/Product/GetProducts") ?? throw new InvalidOperationException();
+        _selectedStore = _stores.First().StoreId;
+        
+        await SignalRClient.OpenConnectionAsync(Navigation.ToAbsoluteUri("/hub"));
+        (_subscription, var currentPrices) = await SignalRClient.RefreshPricesObservable(new RefreshPricesPayload(_selectedStore, true));
+
+        _productPrices = currentPrices
+            .ToDictionary(p => p.ProductId);
+        
+        _subscriptionDisposable = _subscription.Subscribe(p =>
+        {
+            _lastUpdatedProduct = p.ProductId;
+            _productPrices[p.ProductId] = p;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _subscriptionDisposable.Dispose();
+        await SignalRClient.CloseConnectionAsync();
+    }
+
+    private async Task SelectStore(Guid selectedStore)
+    {
+        var payload = new StorePricesSubscriptionPayload
+        {
+            ContextId = _subscription.ContextId,
+            StoreIds = new[] { selectedStore },
+            SendExistingPrices = true
+        };
+        var existingPrices = await SignalRClient.SendMessageToHubAsync<StorePricesSubscriptionPayload, ProductPrice[]>("SubscribeToStores", _subscription.ContextId, payload);
+
+        _lastUpdatedProduct = null;
+        _productPrices = existingPrices
+            .ToDictionary(p => p.ProductId);
+    }
+
+    private string GetProductNameFromId(Guid productId) => 
+        _products.Single(p => p.ProductId == productId).Name;
+
+    private string GetStoreNameFromId(Guid storeId) =>
+        _stores.Single(s => s.StoreId == storeId).Name;
+}

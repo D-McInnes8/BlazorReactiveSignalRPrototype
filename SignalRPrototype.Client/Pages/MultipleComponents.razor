@@ -1,0 +1,72 @@
+﻿@page "/components"
+@using SignalRPrototype.Shared.Models
+@inject HttpClient Http
+
+<PageTitle>Components</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Components</MudText>
+
+<MudSelect Margin="Margin.Dense" T="Store" @bind-Value="_selectedStore" Label="Store" Variant="Variant.Outlined">
+    @foreach (var store in _stores)
+    {
+        <MudSelectItem Value="@store">@store.Name</MudSelectItem>
+    }
+</MudSelect>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add Store</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Clear">Clear</MudButton>
+
+<MudGrid>
+    @foreach (var storeId in _selectedStores)
+    {
+        <MudItem xs="6">
+            <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                <MudStack>
+                    <MudText Align="Align.Center" Typo="Typo.h6">@GetStoreNameFromId(storeId)</MudText>
+                    <StorePricingComponent StoreId="@storeId"></StorePricingComponent>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    }
+    @* <MudItem xs="6"> *@
+    @*     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8"> *@
+    @*         <StorePricingComponent StoreId=""></StorePricingComponent> *@
+    @*     </MudPaper> *@
+    @* </MudItem> *@
+    @* <MudItem xs="6"> *@
+    @*     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8"> *@
+    @* *@
+    @*     </MudPaper> *@
+    @* </MudItem> *@
+</MudGrid>
+
+@code {
+    private IEnumerable<Store> _stores;
+    private readonly List<Guid> _selectedStores;
+
+    private Store? _selectedStore;
+
+    public MultipleComponents()
+    {
+        _stores = Enumerable.Empty<Store>();
+        _selectedStores = new List<Guid>();
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _stores = await Http.GetFromJsonAsync<IEnumerable<Store>>("api/Store/GetStores") ?? throw new InvalidOperationException();
+    }
+
+    private void Add()
+    {
+        if (_selectedStore is not null)
+            _selectedStores.Add(_selectedStore.StoreId);
+    }
+
+    private void Clear()
+    {
+        _selectedStores.Clear();
+    }
+    
+    private string GetStoreNameFromId(Guid storeId) =>
+        _stores.Single(s => s.StoreId == storeId).Name;
+}
