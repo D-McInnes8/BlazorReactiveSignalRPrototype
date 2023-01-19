@@ -2,13 +2,13 @@
 using System.Reactive.Subjects;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using SignalRPrototype.Client.Services.Interface;
+using SignalRPrototype.Client.Services;
 using SignalRPrototype.Shared.Enums;
 using SignalRPrototype.Shared.Models;
 using SignalRPrototype.Shared.Models.Payload;
 using SignalRPrototype.Shared.Models.SignalR;
 
-namespace SignalRPrototype.Client.Services.Concrete;
+namespace SignalRPrototype.Client.Services.Implementations;
 
 public class SignalRClient : ISignalRClient
 {
@@ -81,7 +81,7 @@ public class SignalRClient : ISignalRClient
         return result.Payload;
     }
 
-    public async Task<(SignalRObservable<ProductPrice>, ProductPrice[])> RefreshPricesObservable(RefreshPricesPayload payload)
+    public async Task<(SignalRObservable<ProductPrice>, ProductPrice[])> CreatePricingObservable(RefreshPricesPayload payload)
     {
         if (_hubConnection is null)
             throw new InvalidOperationException("SignalR Hub Connection not opened.");

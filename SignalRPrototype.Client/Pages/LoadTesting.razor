@@ -1,8 +1,8 @@
 ﻿@page "/load"
-@using SignalRPrototype.Client.Services.Interface
+@using SignalRPrototype.Client.Services
 @using SignalRPrototype.Shared.Models
 @using SignalRPrototype.Shared.Models.Payload
-@using SignalRPrototype.Client.Services.Concrete
+@using SignalRPrototype.Client.Services.Implementations
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
@@ -97,7 +97,7 @@
         if (storeIds.Length == 0)
             throw new ArgumentException("Must have at least one store id.", nameof(storeIds));
         
-        var (subscription, _) = await client.RefreshPricesObservable(new RefreshPricesPayload(storeIds, true));
+        var (subscription, _) = await client.CreatePricingObservable(new RefreshPricesPayload(storeIds, true));
         _subscriptionsCount++;
         var disposable = subscription.Subscribe(p =>
             {

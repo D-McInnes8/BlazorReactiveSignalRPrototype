@@ -1,6 +1,6 @@
 ﻿@using SignalRPrototype.Shared.Models
-@using SignalRPrototype.Client.Services.Interface
-@using SignalRPrototype.Client.Services.Concrete
+@using SignalRPrototype.Client.Services
+@using SignalRPrototype.Client.Services.Implementations
 @using SignalRPrototype.Shared.Models.Payload
 @inject HttpClient Http
 @inject ISignalRClient SignalRClient
@@ -57,7 +57,7 @@ else
         _products = await Http.GetFromJsonAsync<IEnumerable<Product>>("api/Product/GetProducts") ?? throw new InvalidOperationException();
         
         await SignalRClient.OpenConnectionAsync(Navigation.ToAbsoluteUri("/hub"));
-        (_subscription, var currentPrices) = await SignalRClient.RefreshPricesObservable(new RefreshPricesPayload(StoreId, true));
+        (_subscription, var currentPrices) = await SignalRClient.CreatePricingObservable(new RefreshPricesPayload(StoreId, true));
         
         _productPrices = currentPrices
             .ToDictionary(p => p.ProductId);

@@ -1,7 +1,7 @@
 ﻿using SignalRPrototype.Shared.Models;
 using SignalRPrototype.Shared.Models.SignalR;
 
-namespace SignalRPrototype.Server.Services.Interface;
+namespace SignalRPrototype.Server.Services;
 
 public interface ISignalRService
 {

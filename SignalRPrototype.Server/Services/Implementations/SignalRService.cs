@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using SignalRPrototype.Server.Hubs;
-using SignalRPrototype.Server.Services.Interface;
+using SignalRPrototype.Server.Services;
 using SignalRPrototype.Shared.Models;
 using SignalRPrototype.Shared.Models.SignalR;
 
-namespace SignalRPrototype.Server.Services.Concrete;
+namespace SignalRPrototype.Server.Services.Implementations;
 
 public class SignalRService : ISignalRService
 {

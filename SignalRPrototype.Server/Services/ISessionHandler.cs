@@ -1,4 +1,4 @@
-﻿namespace SignalRPrototype.Server.Services.Interface;
+﻿namespace SignalRPrototype.Server.Services;
 
 public interface ISessionHandler
 {

@@ -2,8 +2,8 @@
 @inject HttpClient Http
 @inject ISignalRClient SignalRClient
 @inject NavigationManager Navigation
-@using SignalRPrototype.Client.Services.Concrete
-@using SignalRPrototype.Client.Services.Interface
+@using SignalRPrototype.Client.Services.Implementations
+@using SignalRPrototype.Client.Services
 @using SignalRPrototype.Shared.Models
 @using SignalRPrototype.Shared.Models.Payload
 @implements IAsyncDisposable
@@ -53,7 +53,7 @@ else
 
 @code {
     private SignalRObservable<ProductPrice> _subscription;
-    private IDisposable _subscriptionDisposable;
+    private IDisposable? _subscriptionDisposable;
     
     private Dictionary<Guid, ProductPrice> _productPrices;
     private IEnumerable<Store> _stores;
@@ -76,7 +76,7 @@ else
         _selectedStore = _stores.First().StoreId;
         
         await SignalRClient.OpenConnectionAsync(Navigation.ToAbsoluteUri("/hub"));
-        (_subscription, var currentPrices) = await SignalRClient.RefreshPricesObservable(new RefreshPricesPayload(_selectedStore, true));
+        (_subscription, var currentPrices) = await SignalRClient.CreatePricingObservable(new RefreshPricesPayload(_selectedStore, true));
 
         _productPrices = currentPrices
             .ToDictionary(p => p.ProductId);
@@ -91,7 +91,7 @@ else
     
     public async ValueTask DisposeAsync()
     {
-        _subscriptionDisposable.Dispose();
+        _subscriptionDisposable?.Dispose();
         await SignalRClient.CloseConnectionAsync();
     }
 

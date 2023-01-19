@@ -1,18 +1,18 @@
 ﻿using SignalRPrototype.Shared.Extensions;
-using SignalRPrototype.Server.Services.Interface;
+using SignalRPrototype.Server.Services;
 using SignalRPrototype.Server.Utility;
 using SignalRPrototype.Shared.Enums;
 
 namespace SignalRPrototype.Server.HostedServices;
 
-public class AzureQueueHostedService : IHostedService, IDisposable
+public class MockPricingHostedService : IHostedService, IDisposable
 {
     private Timer? _timer;
     private int _executionCount;
     private readonly ISignalRService _signalRService;
     private readonly ISessionHandler _sessionHandler;
 
-    public AzureQueueHostedService(ISignalRService signalRService, ISessionHandler sessionHandler)
+    public MockPricingHostedService(ISignalRService signalRService, ISessionHandler sessionHandler)
     {
         _signalRService = signalRService;
         _sessionHandler = sessionHandler;

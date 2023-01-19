@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
-using SignalRPrototype.Server.Services.Interface;
+using SignalRPrototype.Server.Services;
 
-namespace SignalRPrototype.Server.Services.Concrete;
+namespace SignalRPrototype.Server.Services.Implementations;
 
 public class InMemorySessionStorage : ISessionHandler
 {

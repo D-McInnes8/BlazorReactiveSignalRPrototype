@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using SignalRPrototype.Shared.Models.SignalR;
 
-namespace SignalRPrototype.Client.Services.Concrete;
+namespace SignalRPrototype.Client.Services.Implementations;
 
 public class SignalRObservable<T> : ObservableBase<T>
 {

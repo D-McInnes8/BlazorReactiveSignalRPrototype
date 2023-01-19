@@ -1,9 +1,9 @@
-﻿using SignalRPrototype.Client.Services.Concrete;
+﻿using SignalRPrototype.Client.Services.Implementations;
 using SignalRPrototype.Shared.Enums;
 using SignalRPrototype.Shared.Models;
 using SignalRPrototype.Shared.Models.Payload;
 
-namespace SignalRPrototype.Client.Services.Interface;
+namespace SignalRPrototype.Client.Services;
 
 public interface ISignalRClient
 {
@@ -14,5 +14,5 @@ public interface ISignalRClient
     public Task SendMessageToHubAsync(string methodName, Guid contextId);
     public Task<TReturn> SendMessageToHubAsync<TPayload, TReturn>(string methodName, Guid contextId, TPayload payload);
     
-    public Task<(SignalRObservable<ProductPrice> Context, ProductPrice[] CurrentPrices)> RefreshPricesObservable(RefreshPricesPayload payload);
+    public Task<(SignalRObservable<ProductPrice> Context, ProductPrice[] CurrentPrices)> CreatePricingObservable(RefreshPricesPayload payload);
 }

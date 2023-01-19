@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using SignalRPrototype.Shared.Extensions;
-using SignalRPrototype.Server.Services.Interface;
+using SignalRPrototype.Server.Services;
 using SignalRPrototype.Server.Utility;
 using SignalRPrototype.Shared.Enums;
 using SignalRPrototype.Shared.Models;

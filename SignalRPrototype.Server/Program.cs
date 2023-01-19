@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.SignalR;
 using SignalRPrototype.Server.HostedServices;
 using SignalRPrototype.Server.Hubs;
 using SignalRPrototype.Server.Hubs.Filters;
-using SignalRPrototype.Server.Services.Concrete;
-using SignalRPrototype.Server.Services.Interface;
+using SignalRPrototype.Server.Services.Implementations;
+using SignalRPrototype.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +27,7 @@ builder.Services.AddResponseCompression(opts =>
         new[] { "application/octet-stream" });
 });
 
-builder.Services.AddHostedService<AzureQueueHostedService>();
+builder.Services.AddHostedService<MockPricingHostedService>();
 builder.Services.AddSingleton<ISessionHandler, InMemorySessionStorage>();
 builder.Services.AddSingleton<ISignalRService, SignalRService>();
 

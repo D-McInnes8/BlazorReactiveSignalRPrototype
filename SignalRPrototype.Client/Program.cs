@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
 using SignalRPrototype.Client;
-using SignalRPrototype.Client.Services.Concrete;
-using SignalRPrototype.Client.Services.Interface;
+using SignalRPrototype.Client.Services.Implementations;
+using SignalRPrototype.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
